@@ -30,9 +30,7 @@ resource "airflow_variable" "default" {
 
 ## Authentication
 
-An OAUTH2 token must be passed to the provider block.
-
-### Google Composer Example
+### Google Composer Example (OAUTH2 token)
 
 ```terraform
 data "http" "client_id" {
@@ -72,4 +70,19 @@ provider "airflow" {
 ## Argument Reference
 
 - `base_endpoint` - (Required) The Airflow API endpoint.
-- `oauth2_token` - (Required) An OAUTH2 identity token used to authenticate against an Airflow server.
+- `oauth2_token` - (Optional) An OAUTH2 identity token used to authenticate against an Airflow server. **Conflicts with username and password**
+- `username` - (Optional) The username to use for API basic authentication. **Conflicts with oauth2_token**
+- `password` - (Optional) The password to use for API basic authentication. **Conflicts with oauth2_token**
+
+## Running Acceptence Tests
+
+### Setting Up Local Environment
+
+- See [Official docs](https://airflow.apache.org/docs/apache-airflow/stable/start/docker.html) and run `docker-compose up` spin up a local airflow cluster.
+- `export AIRFLOW_BASE_ENDPOINT=http://localhost:8080`
+- `export AIRFLOW_API_PASSWORD=airflow`
+- `export AIRFLOW_API_USERNAME=airflow`
+
+### Running Tests
+
+Run `make testacc`

@@ -24,7 +24,7 @@ resource airflow_pool "example" {
 The following arguments are supported:
 
 * `name` - (Required) The name of pool.
-* `slots` - (Required) The maximum number of slots that can be assigned to tasks. One job may occupy one or more slots. 
+* `slots` - (Required) The maximum number of slots that can be assigned to tasks. One job may occupy one or more slots.
 
 ## Attributes Reference
 

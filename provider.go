@@ -28,6 +28,7 @@ func AirflowProvider() *schema.Provider {
 			"oauth2_token": {
 				Type:          schema.TypeString,
 				Optional:      true,
+				Sensitive:     true,
 				Description:   "The oauth to use for API authentication",
 				DefaultFunc:   schema.EnvDefaultFunc("AIRFLOW_OAUTH2_TOKEN", nil),
 				ConflictsWith: []string{"username", "password"},
@@ -44,6 +45,7 @@ func AirflowProvider() *schema.Provider {
 				Type:          schema.TypeString,
 				DefaultFunc:   schema.EnvDefaultFunc("AIRFLOW_API_PASSWORD", nil),
 				Optional:      true,
+				Sensitive:     true,
 				Description:   "The password to use for API basic authentication",
 				RequiredWith:  []string{"username"},
 				ConflictsWith: []string{"oauth2_token"},

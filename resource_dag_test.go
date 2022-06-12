@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
@@ -30,9 +31,10 @@ func TestAccAirflowDag_basic(t *testing.T) {
 				),
 			},
 			{
-				ResourceName:      resourceName,
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            resourceName,
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"delete_dag"},
 			},
 			{
 				Config: testAccAirflowDagConfigBasic(false),
@@ -62,8 +64,12 @@ func testAccCheckAirflowDagCheckDestroy(s *terraform.State) error {
 
 		dag, res, err := client.ApiClient.DAGApi.GetDag(client.AuthContext, rs.Primary.ID).Execute()
 		if err == nil {
-			if *dag.DagId == rs.Primary.ID {
-				return fmt.Errorf("Airflow Dag (%s) still exists.", rs.Primary.ID)
+			deleteDag, _ := strconv.ParseBool(rs.Primary.Attributes["delete_dag"])
+
+			if deleteDag {
+				if *dag.DagId == rs.Primary.ID {
+					return fmt.Errorf("Airflow Dag (%s) still exists.", rs.Primary.ID)
+				}
 			}
 		}
 

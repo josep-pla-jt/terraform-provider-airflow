@@ -3,3 +3,7 @@ terraform.tfstate
 terraform.tfstate.*
 .terraform
 vendor
+.vscode
+logs
+plugins
+dags
