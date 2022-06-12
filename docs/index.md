@@ -73,3 +73,16 @@ provider "airflow" {
 - `oauth2_token` - (Optional) An OAUTH2 identity token used to authenticate against an Airflow server. **Conflicts with username and password**
 - `username` - (Optional) The username to use for API basic authentication. **Conflicts with oauth2_token**
 - `password` - (Optional) The password to use for API basic authentication. **Conflicts with oauth2_token**
+
+## Running Acceptence Tests
+
+### Setting Up Local Environment
+
+- See [https://airflow.apache.org/docs/apache-airflow/stable/start/docker.html](Official docs) and run `docker-compose up` spin up a local airflow cluster.
+- `export AIRFLOW_BASE_ENDPOINT=http://localhost:8080`
+- `export AIRFLOW_API_PASSWORD=airflow`
+- `export AIRFLOW_API_USERNAME=airflow`
+
+### Running Tests
+
+Run `make testacc`
