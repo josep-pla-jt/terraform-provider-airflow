@@ -78,7 +78,7 @@ provider "airflow" {
 
 ### Setting Up Local Environment
 
-- See [https://airflow.apache.org/docs/apache-airflow/stable/start/docker.html](Official docs) and run `docker-compose up` spin up a local airflow cluster.
+- See [Official docs](https://airflow.apache.org/docs/apache-airflow/stable/start/docker.html) and run `docker-compose up` spin up a local airflow cluster.
 - `export AIRFLOW_BASE_ENDPOINT=http://localhost:8080`
 - `export AIRFLOW_API_PASSWORD=airflow`
 - `export AIRFLOW_API_USERNAME=airflow`
