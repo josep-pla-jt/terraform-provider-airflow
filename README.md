@@ -4,6 +4,7 @@
 
 [![terraformregistry](https://img.shields.io/badge/terraform-registry-blueviolet)](https://registry.terraform.io/providers/drfaust92/airflow)
 ![build](https://github.com/drfaust92/terraform-provider-airflow/workflows/build/badge.svg)
+![GitHub go.mod Go version (subdirectory of monorepo)](https://img.shields.io/github/go-mod/go-version/drfaust92/terraform-provider-airflow)
 
 The Airflow provider is used to interact with the Airflow. The
 provider needs to be configured with the proper credentials before it can be
