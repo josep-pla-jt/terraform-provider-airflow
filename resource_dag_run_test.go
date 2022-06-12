@@ -121,16 +121,26 @@ func testAccCheckAirflowDagRunCheckDestroy(s *terraform.State) error {
 
 func testAccAirflowDagRunConfigBasic(dagId string) string {
 	return fmt.Sprintf(`
+resource "airflow_dag" "test" {
+  dag_id    = %[1]q
+  is_paused = false
+}
+
 resource "airflow_dag_run" "test" {
-  dag_id     = %[1]q
+  dag_id = airflow_dag.test.dag_id
 }
 `, dagId)
 }
 
 func testAccAirflowDagRunConfigRunId(dagId, dagRunId string) string {
 	return fmt.Sprintf(`
+resource "airflow_dag" "test" {
+  dag_id    = %[1]q
+  is_paused = false
+}
+
 resource "airflow_dag_run" "test" {
-  dag_id     = %[1]q
+  dag_id     = airflow_dag.test.dag_id
   dag_run_id = %[2]q
 }
 `, dagId, dagRunId)
@@ -138,8 +148,13 @@ resource "airflow_dag_run" "test" {
 
 func testAccAirflowDagRunConfigConf(dagId string) string {
 	return fmt.Sprintf(`
+resource "airflow_dag" "test" {
+  dag_id    = %[1]q
+  is_paused = false
+}
+
 resource "airflow_dag_run" "test" {
-  dag_id     = %[1]q
+  dag_id = airflow_dag.test.dag_id
 
   conf = {
     %[1]q = %[1]q

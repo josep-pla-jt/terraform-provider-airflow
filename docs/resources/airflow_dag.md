@@ -10,7 +10,7 @@ description: |-
 
 Provides an Airflow DAG.
 
-> Note this resource adpots an existing DAG and does not create a one, Also on delete the resource is only deleted from state and not acutally deleted. This behavior my change in the future
+> Note this resource adpots an existing DAG and does not create a one, Also on delete the resource by default. A DAG is only deleted from state and not acutally deleted.
 
 ## Example Usage
 
@@ -27,6 +27,7 @@ The following arguments are supported:
 
 * `dag_id` - (Required) The ID of the DAG.
 * `is_paused` - (Required) Whether the DAG is paused.
+* `delete_dag` - (Optional) Whether the to delete DAG when deleted from terraform.
 
 ## Attributes Reference
 

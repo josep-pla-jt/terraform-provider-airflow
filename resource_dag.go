@@ -26,6 +26,11 @@ func resourceDag() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"delete_dag": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+			},
 			"file_token": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -98,17 +103,19 @@ func resourceDagRead(d *schema.ResourceData, m interface{}) error {
 }
 
 func resourceDagDelete(d *schema.ResourceData, m interface{}) error {
-	// pcfg := m.(ProviderConfig)
-	// client := pcfg.ApiClient.DAGApi
+	pcfg := m.(ProviderConfig)
+	client := pcfg.ApiClient.DAGApi
 
-	// resp, err := client.DeleteDag(pcfg.AuthContext, d.Id()).Execute()
-	// if err != nil {
-	// 	return fmt.Errorf("failed to delete DAG `%s` from Airflow: %w", d.Id(), err)
-	// }
+	if d.Get("delete_dag").(bool) {
+		resp, err := client.DeleteDag(pcfg.AuthContext, d.Id()).Execute()
+		if err != nil {
+			return fmt.Errorf("failed to delete DAG `%s` from Airflow: %w", d.Id(), err)
+		}
 
-	// if resp != nil && resp.StatusCode == 404 {
-	// 	return nil
-	// }
+		if resp != nil && resp.StatusCode == 404 {
+			return nil
+		}
+	}
 
 	return nil
 }
