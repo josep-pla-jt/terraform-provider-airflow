@@ -26,7 +26,7 @@ resource "airflow_variable" "default" {
 
 ## Authentication
 
-### Google Composer Example (OAUTH2 token)
+### Google Composer 1 Example (OAUTH2 identity token)
 
 ```terraform
 data "http" "client_id" {
@@ -63,6 +63,47 @@ provider "airflow" {
 }
 ```
 
+### Google Composer 2 Example (OAUTH2 access token)
+Composer 2 changes how the API is accessed by the provider, you can just use the composer airflow web UI endpoint, and you can use a standard access token.
+#### With service account impersionation:
+```
+resource "google_service_account" "example" {
+  account_id = "example"
+}
+
+data "google_service_account_access_token" "impersonated" {
+  target_service_account = google_service_account.example.email
+  delegates              = []
+  scopes                 = ["userinfo-email", "cloud-platform"]
+  lifetime               = "300s"
+}
+
+provider "google" {
+  alias        = "impersonated"
+  access_token = data.google_service_account_access_token.impersonated.access_token
+}
+
+data "google_client_config" "airflow" {
+  provider = google.impersonated
+}
+
+provider "airflow" {
+  base_endpoint = composer-url
+  oauth2_token  = data.google_client_config.airflow.access_token
+}
+
+```
+#### Using the default provider & service account:
+```
+data "google_client_config" "airflow" {
+  provider = google
+}
+
+provider "airflow" {
+  base_endpoint = composer-url
+  oauth2_token  = data.google_client_config.airflow.access_token
+}
+```
 ## Argument Reference
 
 - `base_endpoint` - (Required) The Airflow API endpoint.
