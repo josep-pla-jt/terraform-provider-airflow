@@ -30,7 +30,30 @@ resource "airflow_variable" "default" {
 
 ## Authentication
 
-### Google Composer Example (OAUTH2 token)
+### Google Composer V2 Example (OAUTH2 token)
+
+```terraform
+data "http" "client_id" {
+  url = "composer-url"
+}
+
+resource "google_service_account" "example" {
+  account_id = "example"
+}
+
+data "google_service_account_access_token" "impersonated" {
+  target_service_account = google_service_account.example.email
+  delegates              = []
+  scopes                 = ["userinfo-email", "cloud-platform"]
+  lifetime               = "300s"
+}
+
+provider "airflow" {
+  base_endpoint = data.http.client_id.url
+  oauth2_token  = data.google_service_account_access_token.impersonated.access_token
+}
+
+### Google Composer V1 Example (OAUTH2 token)
 
 ```terraform
 data "http" "client_id" {
