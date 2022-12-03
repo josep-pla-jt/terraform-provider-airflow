@@ -3,12 +3,12 @@ layout: "airflow"
 page_title: "Airflow: airflow_dag_run"
 sidebar_current: "docs-airflow-resource-dag-run"
 description: |-
-  Provides an Airflow dag run
+  Provides an Airflow dag run resource
 ---
 
 # airflow_dag_run
 
-Provides an Airflow dag run.
+Provides an Airflow dag run resource (triggers a DAG).
 
 ## Example Usage
 
