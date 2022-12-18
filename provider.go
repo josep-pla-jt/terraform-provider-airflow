@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"net/url"
 	"strings"
 
 	"github.com/apache/airflow-client-go/airflow"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/logging"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
@@ -61,26 +64,30 @@ func AirflowProvider() *schema.Provider {
 			"airflow_role":       resourceRole(),
 			"airflow_user":       resourceUser(),
 		},
-		ConfigureFunc: providerConfigure,
+		ConfigureContextFunc: providerConfigure,
 	}
 }
 
-func providerConfigure(d *schema.ResourceData) (interface{}, error) {
+func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+	transport := logging.NewLoggingHTTPTransport(http.DefaultTransport)
+	client := &http.Client{
+		Transport: transport,
+	}
+
 	endpoint := d.Get("base_endpoint").(string)
 	u, err := url.Parse(endpoint)
 	if err != nil {
-		return nil, fmt.Errorf("invalid base_endpoint: %w", err)
+		return nil, diag.Errorf("invalid base_endpoint: %s", err)
 	}
 
-	authCtx := context.Background()
 	if v, ok := d.GetOk("oauth2_token"); ok {
-		authCtx = context.WithValue(authCtx, airflow.ContextAccessToken, v)
+		ctx = context.WithValue(ctx, airflow.ContextAccessToken, v)
 	}
 
 	if username, ok := d.GetOk("username"); ok {
 		var password interface{}
 		if password, ok = d.GetOk("password"); !ok {
-			return nil, fmt.Errorf("found username for basic auth, but password not specified")
+			return nil, diag.Errorf("found username for basic auth, but password not specified")
 		}
 		log.Printf("[DEBUG] Using API Basic Auth")
 
@@ -88,15 +95,16 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 			UserName: username.(string),
 			Password: password.(string),
 		}
-		authCtx = context.WithValue(authCtx, airflow.ContextBasicAuth, cred)
+		ctx = context.WithValue(ctx, airflow.ContextBasicAuth, cred)
 	}
 
 	path := strings.TrimRight(u.Path, "/")
 
 	clientConf := &airflow.Configuration{
-		Scheme: u.Scheme,
-		Host:   u.Host,
-		Debug:  true,
+		Scheme:     u.Scheme,
+		Host:       u.Host,
+		Debug:      true,
+		HTTPClient: client,
 		Servers: airflow.ServerConfigurations{
 			{
 				URL:         fmt.Sprint(path, "/api/v1"),
@@ -105,8 +113,10 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 		},
 	}
 
-	return ProviderConfig{
+	prov := ProviderConfig{
 		ApiClient:   airflow.NewAPIClient(clientConf),
-		AuthContext: authCtx,
-	}, nil
+		AuthContext: ctx,
+	}
+
+	return prov, diag.Diagnostics{}
 }
