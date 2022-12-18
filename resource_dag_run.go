@@ -7,15 +7,16 @@ import (
 	"time"
 
 	"github.com/apache/airflow-client-go/airflow"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceDagRun() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceDagRunCreate,
-		Read:   resourceDagRunRead,
-		Delete: resourceDagRunDelete,
+		CreateContext:        resourceDagRunCreate,
+		ReadWithoutTimeout:   resourceDagRunRead,
+		DeleteWithoutTimeout: resourceDagRunDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
@@ -48,7 +49,7 @@ func resourceDagRun() *schema.Resource {
 	}
 }
 
-func resourceDagRunCreate(d *schema.ResourceData, m interface{}) error {
+func resourceDagRunCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	pcfg := m.(ProviderConfig)
 	client := pcfg.ApiClient.DAGRunApi
 
@@ -65,7 +66,7 @@ func resourceDagRunCreate(d *schema.ResourceData, m interface{}) error {
 
 	res, _, err := client.PostDagRun(pcfg.AuthContext, dagId).DAGRun(dagRun).Execute()
 	if err != nil {
-		return fmt.Errorf("failed to create Dag Run `%s` from Airflow: %w", dagId, err)
+		return diag.Errorf("failed to create Dag Run `%s` from Airflow: %s", dagId, err)
 	}
 	d.SetId(fmt.Sprintf("%s:%s", dagId, *res.DagRunId.Get()))
 
@@ -78,19 +79,19 @@ func resourceDagRunCreate(d *schema.ResourceData, m interface{}) error {
 
 	_, err = stateConf.WaitForStateContext(pcfg.AuthContext)
 	if err != nil {
-		return fmt.Errorf("error waiting for Dag Run %q to finish: %s", d.Id(), err)
+		return diag.Errorf("error waiting for Dag Run %q to finish: %s", d.Id(), err)
 	}
 
-	return resourceDagRunRead(d, m)
+	return resourceDagRunRead(ctx, d, m)
 }
 
-func resourceDagRunRead(d *schema.ResourceData, m interface{}) error {
+func resourceDagRunRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	pcfg := m.(ProviderConfig)
 	client := pcfg.ApiClient.DAGRunApi
 
 	dagId, dagRunId, err := airflowDagRunId(d.Id())
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	dagRun, resp, err := client.GetDagRun(pcfg.AuthContext, dagId, dagRunId).Execute()
@@ -99,7 +100,7 @@ func resourceDagRunRead(d *schema.ResourceData, m interface{}) error {
 		return nil
 	}
 	if err != nil {
-		return fmt.Errorf("failed to get dagRunId `%s` from Airflow: %w", d.Id(), err)
+		return diag.Errorf("failed to get dagRunId `%s` from Airflow: %s", d.Id(), err)
 	}
 
 	d.Set("dag_id", dagRun.DagId)
@@ -110,18 +111,18 @@ func resourceDagRunRead(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-func resourceDagRunDelete(d *schema.ResourceData, m interface{}) error {
+func resourceDagRunDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	pcfg := m.(ProviderConfig)
 	client := pcfg.ApiClient.DAGRunApi
 
 	dagId, dagRunId, err := airflowDagRunId(d.Id())
 	if err != nil {
-		return err
+		return diag.FromErr(err)
 	}
 
 	resp, err := client.DeleteDagRun(pcfg.AuthContext, dagId, dagRunId).Execute()
 	if err != nil {
-		return fmt.Errorf("failed to delete dagRunId `%s` from Airflow: %w", d.Id(), err)
+		return diag.Errorf("failed to delete dagRunId `%s` from Airflow: %s", d.Id(), err)
 	}
 
 	if resp != nil && resp.StatusCode == 404 {
@@ -150,7 +151,7 @@ func resourceDagRunStateRefreshFunc(id string, pcfg context.Context, client *air
 
 		dagRun, _, err := client.GetDagRun(pcfg, dagId, dagRunId).Execute()
 		if err != nil {
-			return nil, "", fmt.Errorf("failed to get Dag Run `%s` from Airflow: %w", dagRunId, err)
+			return nil, "", fmt.Errorf("failed to get Dag Run `%s` from Airflow: %s", dagRunId, err)
 		}
 
 		return dagRun, string(dagRun.GetState()), nil

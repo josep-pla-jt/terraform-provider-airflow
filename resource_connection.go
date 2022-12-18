@@ -1,22 +1,23 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"strings"
 
 	"github.com/apache/airflow-client-go/airflow"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func resourceConnection() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceConnectionCreate,
-		Read:   resourceConnectionRead,
-		Update: resourceConnectionUpdate,
-		Delete: resourceConnectionDelete,
+		CreateWithoutTimeout: resourceConnectionCreate,
+		ReadWithoutTimeout:   resourceConnectionRead,
+		UpdateWithoutTimeout: resourceConnectionUpdate,
+		DeleteWithoutTimeout: resourceConnectionDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
@@ -78,7 +79,7 @@ func suppressSameJsonDiff(k, oldo, newo string, d *schema.ResourceData) bool {
 	return reflect.DeepEqual(oldIface, newIface)
 }
 
-func resourceConnectionCreate(d *schema.ResourceData, m interface{}) error {
+func resourceConnectionCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	pcfg := m.(ProviderConfig)
 	client := pcfg.ApiClient
 	connId := d.Get("connection_id").(string)
@@ -115,14 +116,14 @@ func resourceConnectionCreate(d *schema.ResourceData, m interface{}) error {
 
 	_, _, err := connApi.PostConnection(pcfg.AuthContext).Connection(conn).Execute()
 	if err != nil {
-		return fmt.Errorf("failed to create connection `%s` from Airflow: %w", connId, err)
+		return diag.Errorf("failed to create connection `%s` from Airflow: %s", connId, err)
 	}
 	d.SetId(connId)
 
-	return resourceConnectionRead(d, m)
+	return resourceConnectionRead(ctx, d, m)
 }
 
-func resourceConnectionRead(d *schema.ResourceData, m interface{}) error {
+func resourceConnectionRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	pcfg := m.(ProviderConfig)
 	client := pcfg.ApiClient
 	connection, resp, err := client.ConnectionApi.GetConnection(pcfg.AuthContext, d.Id()).Execute()
@@ -131,7 +132,7 @@ func resourceConnectionRead(d *schema.ResourceData, m interface{}) error {
 		return nil
 	}
 	if err != nil {
-		return fmt.Errorf("failed to get connection `%s` from Airflow: %w", d.Id(), err)
+		return diag.Errorf("failed to get connection `%s` from Airflow: %s", d.Id(), err)
 	}
 
 	d.Set("connection_id", connection.GetConnectionId())
@@ -151,7 +152,7 @@ func resourceConnectionRead(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-func resourceConnectionUpdate(d *schema.ResourceData, m interface{}) error {
+func resourceConnectionUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	pcfg := m.(ProviderConfig)
 	client := pcfg.ApiClient
 	connId := d.Id()
@@ -188,19 +189,19 @@ func resourceConnectionUpdate(d *schema.ResourceData, m interface{}) error {
 
 	_, _, err := client.ConnectionApi.PatchConnection(pcfg.AuthContext, connId).Connection(conn).Execute()
 	if err != nil {
-		return fmt.Errorf("failed to update connection `%s` from Airflow: %w", connId, err)
+		return diag.Errorf("failed to update connection `%s` from Airflow: %s", connId, err)
 	}
 
-	return resourceConnectionRead(d, m)
+	return resourceConnectionRead(ctx, d, m)
 }
 
-func resourceConnectionDelete(d *schema.ResourceData, m interface{}) error {
+func resourceConnectionDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	pcfg := m.(ProviderConfig)
 	client := pcfg.ApiClient
 
 	resp, err := client.ConnectionApi.DeleteConnection(pcfg.AuthContext, d.Id()).Execute()
 	if err != nil {
-		return fmt.Errorf("failed to delete connection `%s` from Airflow: %w", d.Id(), err)
+		return diag.Errorf("failed to delete connection `%s` from Airflow: %s", d.Id(), err)
 	}
 
 	if resp != nil && resp.StatusCode == 404 {

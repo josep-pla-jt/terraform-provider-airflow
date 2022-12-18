@@ -1,18 +1,19 @@
 package main
 
 import (
-	"fmt"
+	"context"
 
 	"github.com/apache/airflow-client-go/airflow"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceRole() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceRoleCreate,
-		Read:   resourceRoleRead,
-		Update: resourceRoleUpdate,
-		Delete: resourceRoleDelete,
+		CreateWithoutTimeout: resourceRoleCreate,
+		ReadWithoutTimeout:   resourceRoleRead,
+		UpdateWithoutTimeout: resourceRoleUpdate,
+		DeleteWithoutTimeout: resourceRoleDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
@@ -42,7 +43,7 @@ func resourceRole() *schema.Resource {
 	}
 }
 
-func resourceRoleCreate(d *schema.ResourceData, m interface{}) error {
+func resourceRoleCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	pcfg := m.(ProviderConfig)
 	client := pcfg.ApiClient
 
@@ -59,14 +60,14 @@ func resourceRoleCreate(d *schema.ResourceData, m interface{}) error {
 
 	_, _, err := varApi.PostRole(pcfg.AuthContext).Role(role).Execute()
 	if err != nil {
-		return fmt.Errorf("failed to create role `%s` from Airflow: %w", name, err)
+		return diag.Errorf("failed to create role `%s` from Airflow: %s", name, err)
 	}
 	d.SetId(name)
 
-	return resourceRoleRead(d, m)
+	return resourceRoleRead(ctx, d, m)
 }
 
-func resourceRoleRead(d *schema.ResourceData, m interface{}) error {
+func resourceRoleRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	pcfg := m.(ProviderConfig)
 	client := pcfg.ApiClient
 
@@ -76,18 +77,18 @@ func resourceRoleRead(d *schema.ResourceData, m interface{}) error {
 		return nil
 	}
 	if err != nil {
-		return fmt.Errorf("failed to get role `%s` from Airflow: %w", d.Id(), err)
+		return diag.Errorf("failed to get role `%s` from Airflow: %s", d.Id(), err)
 	}
 
 	d.Set("name", role.Name)
 	if err := d.Set("action", flattenAirflowRoleActions(*role.Actions)); err != nil {
-		return fmt.Errorf("error setting action: %w", err)
+		return diag.Errorf("error setting action: %s", err)
 	}
 
 	return nil
 }
 
-func resourceRoleUpdate(d *schema.ResourceData, m interface{}) error {
+func resourceRoleUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	pcfg := m.(ProviderConfig)
 	client := pcfg.ApiClient
 
@@ -100,19 +101,19 @@ func resourceRoleUpdate(d *schema.ResourceData, m interface{}) error {
 
 	_, _, err := client.RoleApi.PatchRole(pcfg.AuthContext, name).Role(role).Execute()
 	if err != nil {
-		return fmt.Errorf("failed to update role `%s` from Airflow: %w", name, err)
+		return diag.Errorf("failed to update role `%s` from Airflow: %s", name, err)
 	}
 
-	return resourceRoleRead(d, m)
+	return resourceRoleRead(ctx, d, m)
 }
 
-func resourceRoleDelete(d *schema.ResourceData, m interface{}) error {
+func resourceRoleDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	pcfg := m.(ProviderConfig)
 	client := pcfg.ApiClient
 
 	resp, err := client.RoleApi.DeleteRole(pcfg.AuthContext, d.Id()).Execute()
 	if err != nil {
-		return fmt.Errorf("failed to delete role `%s` from Airflow: %w", d.Id(), err)
+		return diag.Errorf("failed to delete role `%s` from Airflow: %s", d.Id(), err)
 	}
 
 	if resp != nil && resp.StatusCode == 404 {
