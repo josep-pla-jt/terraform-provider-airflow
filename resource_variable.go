@@ -1,18 +1,19 @@
 package main
 
 import (
-	"fmt"
+	"context"
 
 	"github.com/apache/airflow-client-go/airflow"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceVariable() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceVariableCreate,
-		Read:   resourceVariableRead,
-		Update: resourceVariableUpdate,
-		Delete: resourceVariableDelete,
+		CreateWithoutTimeout: resourceVariableCreate,
+		ReadWithoutTimeout:   resourceVariableRead,
+		UpdateWithoutTimeout: resourceVariableUpdate,
+		DeleteWithoutTimeout: resourceVariableDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
@@ -30,7 +31,7 @@ func resourceVariable() *schema.Resource {
 	}
 }
 
-func resourceVariableCreate(d *schema.ResourceData, m interface{}) error {
+func resourceVariableCreate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	pcfg := m.(ProviderConfig)
 	client := pcfg.ApiClient
 
@@ -43,14 +44,14 @@ func resourceVariableCreate(d *schema.ResourceData, m interface{}) error {
 		Value: &val,
 	}).Execute()
 	if err != nil {
-		return fmt.Errorf("failed to create variable `%s` from Airflow: %w", key, err)
+		return diag.Errorf("failed to create variable `%s` from Airflow: %s", key, err)
 	}
 	d.SetId(key)
 
-	return resourceVariableRead(d, m)
+	return resourceVariableRead(ctx, d, m)
 }
 
-func resourceVariableRead(d *schema.ResourceData, m interface{}) error {
+func resourceVariableRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	pcfg := m.(ProviderConfig)
 	client := pcfg.ApiClient
 
@@ -60,7 +61,7 @@ func resourceVariableRead(d *schema.ResourceData, m interface{}) error {
 		return nil
 	}
 	if err != nil {
-		return fmt.Errorf("failed to get variable `%s` from Airflow: %w", d.Id(), err)
+		return diag.Errorf("failed to get variable `%s` from Airflow: %s", d.Id(), err)
 	}
 
 	d.Set("key", variable.Key)
@@ -69,7 +70,7 @@ func resourceVariableRead(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-func resourceVariableUpdate(d *schema.ResourceData, m interface{}) error {
+func resourceVariableUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	pcfg := m.(ProviderConfig)
 	client := pcfg.ApiClient
 
@@ -80,19 +81,19 @@ func resourceVariableUpdate(d *schema.ResourceData, m interface{}) error {
 		Value: &val,
 	}).Execute()
 	if err != nil {
-		return fmt.Errorf("failed to update variable `%s` from Airflow: %w", key, err)
+		return diag.Errorf("failed to update variable `%s` from Airflow: %s", key, err)
 	}
 
-	return resourceVariableRead(d, m)
+	return resourceVariableRead(ctx, d, m)
 }
 
-func resourceVariableDelete(d *schema.ResourceData, m interface{}) error {
+func resourceVariableDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	pcfg := m.(ProviderConfig)
 	client := pcfg.ApiClient
 
 	resp, err := client.VariableApi.DeleteVariable(pcfg.AuthContext, d.Id()).Execute()
 	if err != nil {
-		return fmt.Errorf("failed to delete variable `%s` from Airflow: %w", d.Id(), err)
+		return diag.Errorf("failed to delete variable `%s` from Airflow: %s", d.Id(), err)
 	}
 
 	if resp != nil && resp.StatusCode == 404 {

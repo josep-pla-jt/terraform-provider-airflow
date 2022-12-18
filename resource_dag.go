@@ -1,18 +1,19 @@
 package main
 
 import (
-	"fmt"
+	"context"
 
 	"github.com/apache/airflow-client-go/airflow"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
 func resourceDag() *schema.Resource {
 	return &schema.Resource{
-		Create: resourceDagUpdate,
-		Read:   resourceDagRead,
-		Update: resourceDagUpdate,
-		Delete: resourceDagDelete,
+		CreateWithoutTimeout: resourceDagUpdate,
+		ReadWithoutTimeout:   resourceDagRead,
+		UpdateWithoutTimeout: resourceDagUpdate,
+		DeleteWithoutTimeout: resourceDagDelete,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
 		},
@@ -59,7 +60,7 @@ func resourceDag() *schema.Resource {
 	}
 }
 
-func resourceDagUpdate(d *schema.ResourceData, m interface{}) error {
+func resourceDagUpdate(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	pcfg := m.(ProviderConfig)
 	client := pcfg.ApiClient
 
@@ -70,14 +71,14 @@ func resourceDagUpdate(d *schema.ResourceData, m interface{}) error {
 
 	_, res, err := dagApi.PatchDag(pcfg.AuthContext, dagId).DAG(dag).Execute()
 	if res.StatusCode != 200 {
-		return fmt.Errorf("failed to update DAG `%s` from Airflow: %w", dagId, err)
+		return diag.Errorf("failed to update DAG `%s` from Airflow: %s", dagId, err)
 	}
 	d.SetId(dagId)
 
-	return resourceDagRead(d, m)
+	return resourceDagRead(ctx, d, m)
 }
 
-func resourceDagRead(d *schema.ResourceData, m interface{}) error {
+func resourceDagRead(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	pcfg := m.(ProviderConfig)
 	client := pcfg.ApiClient
 
@@ -87,7 +88,7 @@ func resourceDagRead(d *schema.ResourceData, m interface{}) error {
 		return nil
 	}
 	if resp.StatusCode != 200 {
-		return fmt.Errorf("failed to get DAG `%s` from Airflow: %w", d.Id(), err)
+		return diag.Errorf("failed to get DAG `%s` from Airflow: %s", d.Id(), err)
 	}
 
 	d.Set("dag_id", DAG.DagId)
@@ -102,14 +103,14 @@ func resourceDagRead(d *schema.ResourceData, m interface{}) error {
 	return nil
 }
 
-func resourceDagDelete(d *schema.ResourceData, m interface{}) error {
+func resourceDagDelete(ctx context.Context, d *schema.ResourceData, m interface{}) diag.Diagnostics {
 	pcfg := m.(ProviderConfig)
 	client := pcfg.ApiClient.DAGApi
 
 	if d.Get("delete_dag").(bool) {
 		resp, err := client.DeleteDag(pcfg.AuthContext, d.Id()).Execute()
 		if err != nil {
-			return fmt.Errorf("failed to delete DAG `%s` from Airflow: %w", d.Id(), err)
+			return diag.Errorf("failed to delete DAG `%s` from Airflow: %s", d.Id(), err)
 		}
 
 		if resp != nil && resp.StatusCode == 404 {
