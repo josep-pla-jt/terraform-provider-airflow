@@ -3,7 +3,7 @@ module github.com/drfaust92/terraform-provider-airflow
 go 1.19
 
 require (
-	github.com/apache/airflow-client-go/airflow v0.0.0-20220509204651-4f1b26e4a5d0
+	github.com/apache/airflow-client-go/airflow v0.0.0-20230116092747-6404ab2a6fba
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.24.1
 )
 
