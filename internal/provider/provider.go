@@ -1,4 +1,4 @@
-package main
+package provider
 
 import (
 	"context"
@@ -21,7 +21,7 @@ type ProviderConfig struct {
 }
 
 func AirflowProvider() *schema.Provider {
-	return &schema.Provider{
+	provider := &schema.Provider{
 		Schema: map[string]*schema.Schema{
 			"base_endpoint": {
 				Type:         schema.TypeString,
@@ -64,8 +64,14 @@ func AirflowProvider() *schema.Provider {
 			"airflow_role":       resourceRole(),
 			"airflow_user":       resourceUser(),
 		},
-		ConfigureContextFunc: providerConfigure,
+		// ConfigureContextFunc: providerConfigure,
 	}
+
+	provider.ConfigureContextFunc = func(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
+		return providerConfigure(ctx, d)
+	}
+
+	return provider
 }
 
 func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
@@ -74,6 +80,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 		Transport: transport,
 	}
 
+	ctx = context.Background()
 	endpoint := d.Get("base_endpoint").(string)
 	u, err := url.Parse(endpoint)
 	if err != nil {
