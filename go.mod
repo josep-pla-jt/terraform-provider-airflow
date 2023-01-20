@@ -1,4 +1,4 @@
-module github.com/apache/terraform-provider-airflow
+module github.com/drfaust92/terraform-provider-airflow
 
 go 1.19
 
