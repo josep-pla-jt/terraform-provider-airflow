@@ -18,7 +18,7 @@ func main() {
 		ProviderFunc: func() *schema.Provider {
 			return provider.AirflowProvider()
 		},
-		ProviderAddr: "DrFaust92/airflow",
+		ProviderAddr: "registry.terraform.io/drfaust92/airflow",
 		Debug:        debug,
 	})
 }
