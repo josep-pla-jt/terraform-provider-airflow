@@ -26,6 +26,7 @@ The following arguments are supported:
 * `connection_id` - (Required) The connection ID.
 * `conn_type` - (Required) The connection type.
 * `host` - (Optional) The host of the connection.
+* `description` - (Optional) The description of the connection.
 * `login` - (Optional) The login of the connection.
 * `schema` - (Optional) The schema of the connection.
 * `port` - (Optional) The port of the connection.
