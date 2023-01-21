@@ -31,6 +31,10 @@ func resourceConnection() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 			},
+			"description": {
+				Type:     schema.TypeString,
+				Optional: true,
+			},
 			"host": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -94,6 +98,10 @@ func resourceConnectionCreate(ctx context.Context, d *schema.ResourceData, m int
 		conn.SetHost(v.(string))
 	}
 
+	if v, ok := d.GetOk("description"); ok {
+		conn.SetDescription(v.(string))
+	}
+
 	if v, ok := d.GetOk("login"); ok {
 		conn.SetLogin(v.(string))
 	}
@@ -142,6 +150,7 @@ func resourceConnectionRead(ctx context.Context, d *schema.ResourceData, m inter
 	d.Set("schema", connection.GetSchema())
 	d.Set("port", connection.GetPort())
 	d.Set("extra", connection.GetExtra())
+	d.Set("description", connection.GetDescription())
 
 	if v, ok := connection.GetPasswordOk(); ok {
 		d.Set("password", v)
@@ -165,6 +174,10 @@ func resourceConnectionUpdate(ctx context.Context, d *schema.ResourceData, m int
 
 	if v, ok := d.GetOk("host"); ok {
 		conn.SetHost(v.(string))
+	}
+
+	if v, ok := d.GetOk("description"); ok {
+		conn.SetDescription(v.(string))
 	}
 
 	if v, ok := d.GetOk("login"); ok {

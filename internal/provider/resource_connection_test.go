@@ -50,6 +50,7 @@ func TestAccAirflowConnection_full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "connection_id", rName),
 					resource.TestCheckResourceAttr(resourceName, "conn_type", "http"),
 					resource.TestCheckResourceAttr(resourceName, "host", rName),
+					resource.TestCheckResourceAttr(resourceName, "description", rName),
 					resource.TestCheckResourceAttr(resourceName, "login", rName),
 					resource.TestCheckResourceAttr(resourceName, "schema", rName),
 					resource.TestCheckResourceAttr(resourceName, "port", "443"),
@@ -74,6 +75,7 @@ func TestAccAirflowConnection_full(t *testing.T) {
 					resource.TestCheckResourceAttr(resourceName, "port", "80"),
 					resource.TestCheckResourceAttr(resourceName, "extra", rNameUpdated),
 					resource.TestCheckResourceAttr(resourceName, "password", rNameUpdated),
+					resource.TestCheckResourceAttr(resourceName, "description", rNameUpdated),
 				),
 			},
 		},
@@ -118,6 +120,7 @@ resource "airflow_connection" "test" {
   connection_id = %[1]q
   conn_type     = "http"
   host          = %[2]q
+  description   = %[2]q  
   login         = %[2]q
   schema        = %[2]q
   port          = %[3]d
