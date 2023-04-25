@@ -114,7 +114,7 @@ func providerConfigure(ctx context.Context, d *schema.ResourceData) (interface{}
 		HTTPClient: client,
 		Servers: airflow.ServerConfigurations{
 			{
-				URL:         fmt.Sprint(path, "aws_mwaa/cli"),
+				URL:         fmt.Sprint(path, "/aws_mwaa/cli"),
 				Description: "Apache Airflow Stable API.",
 			},
 		},
